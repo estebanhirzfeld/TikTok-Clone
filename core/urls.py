@@ -13,10 +13,10 @@ from apps.users.views import CustomUserDetailsView
 # TODO: Change "Core"
 schema_view = get_schema_view(
     openapi.Info(
-        title="Core",
+        title="TikTok Clone",
         default_version="v1.0",
-        description="Core endpoints",
-        contact=openapi.Contact(email="core@mail.com"), 
+        description="TikTok Clone endpoints",
+        contact=openapi.Contact(email="contact@tiktok-clone.site"), 
         license=openapi.License(name="MIT License"),
     ),
     public=True,
@@ -39,6 +39,6 @@ urlpatterns = [
 ]
 
 # TODO: Change "Core"
-admin.site.site_header = "Core Admin"
-admin.site.site_title = "Core Admin Portal"
-admin.site.index_title = "Welcome to Core Portal"
+admin.site.site_header = "TikTok Clone Admin"
+admin.site.site_title = "TikTok Clone Admin Portal"
+admin.site.index_title = "Welcome to TikTok Clone Portal"

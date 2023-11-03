@@ -21,7 +21,7 @@ services:
             - redis
         command: /start
         networks:
-            - core-api
+            - tiktok-clone-api
 
     postgres:
         build:
@@ -33,7 +33,7 @@ services:
         env_file:
             - ./.envs/.local/.postgres
         networks:
-            - core-api
+            - tiktok-clone-api
 
     nginx:
         restart: always
@@ -50,7 +50,7 @@ services:
         env_file:
             - ./.envs/.local/.django  
         networks:
-            - core-api
+            - tiktok-clone-api
 
     mailhog:
         image: mailhog/mailhog:v1.0.0
@@ -60,12 +60,12 @@ services:
         volumes:
             - mailhog_data:/data
         networks:
-            - core-api
+            - tiktok-clone-api
     
     redis:
         image: redis:7-alpine
         networks:
-            - core-api
+            - tiktok-clone-api
 
     celery:
         build:
@@ -82,7 +82,7 @@ services:
             - postgres
             - mailhog
         networks:
-            - core-api
+            - tiktok-clone-api
     
     flower:
         build:
@@ -100,11 +100,11 @@ services:
             - redis
             - postgres
         networks:
-            - core-api
+            - tiktok-clone-api
 
 # TODO: Change "Core"
 networks:
-    core-api:
+    tiktok-clone-api:
         driver: bridge
 
 volumes:

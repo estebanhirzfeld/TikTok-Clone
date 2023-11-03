@@ -32,8 +32,8 @@ volume:
 	docker volume inspect src_local_postgres_data
 
 # TODO: Change "Core"
-core-db:
-	docker compose -f local.yml exec postgres psql --username=postgres_user --dbname=core-db
+tiktok-clone-db:
+	docker compose -f local.yml exec postgres psql --username=postgres_user --dbname=tiktok-clone-db
 
 flake8:
 	docker compose -f local.yml exec django flake8 .

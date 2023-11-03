@@ -220,8 +220,8 @@ SIMPLE_JWT = {
 REST_AUTH = {
     "USE_JWT": True,
     #TODO: Change "Core"    
-    "JWT_AUTH_COOKIE": "core-access-token",
-    "JWT_AUTH_REFRESH_COOKIE": "core-refresh-token", 
+    "JWT_AUTH_COOKIE": "tiktok-clone-access-token",
+    "JWT_AUTH_REFRESH_COOKIE": "tiktok-clone-refresh-token", 
     "REGISTER_SERIALIZER": "apps.users.serializers.CustomRegisterSerializer",
 }
 
