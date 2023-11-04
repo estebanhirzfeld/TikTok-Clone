@@ -32,7 +32,9 @@ DJANGO_APPS = [
 ]
 
 LOCAL_APPS = [
-    "apps.users"
+    "apps.users",
+    "apps.common",
+    "apps.profiles",
 ]
 
 THIRD_PARTY_APPS = [

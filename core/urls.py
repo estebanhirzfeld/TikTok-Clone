@@ -36,6 +36,9 @@ urlpatterns = [
     path("api/v1/auth/", include("dj_rest_auth.urls")),
     path( "api/v1/auth/password/reset/confirm/<uidb64>/<token>/", PasswordResetConfirmView.as_view(), name="password_reset_confirm"),
 
+    # Profile
+    path("api/v1/profiles/", include("apps.profiles.urls")),
+
 ]
 
 # TODO: Change "Core"
