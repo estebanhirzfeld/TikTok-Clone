@@ -39,6 +39,9 @@ urlpatterns = [
     # Profile
     path("api/v1/profiles/", include("apps.profiles.urls")),
 
+    # Video
+    path("api/v1/videos/", include("apps.videos.urls")),
+
 ]
 
 # TODO: Change "Core"
