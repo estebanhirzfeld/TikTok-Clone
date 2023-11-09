@@ -17,6 +17,7 @@ from .models import Profile
 from .pagination import ProfilePagination
 from .renderers import ProfileJSONRenderer, ProfilesJSONRenderer
 from .serializers import FollowSerializer, ProfileSerializer, UpdateProfileSerializer
+from .emails import send_profile_following_notification
 
 User = get_user_model()
 
@@ -155,11 +156,10 @@ class FollowAPIView(APIView):
                 return Response(formatted_response, status=status.HTTP_400_BAD_REQUEST)
 
             user_profile.follow(profile)
-            subject = "A new user follows you"
-            message = f"Hi there, {profile.user.first_name}!!, the user {user_profile.user.first_name} {user_profile.user.last_name} now follows you"
-            from_email = DEFAULT_FROM_EMAIL
-            recipient_list = [profile.user.email]
-            send_mail(subject, message, from_email, recipient_list, fail_silently=True)
+            
+            # Notify following user by email
+            send_profile_following_notification(user_profile, profile)
+
             return Response(
                 {
                     "status_code": status.HTTP_200_OK,
