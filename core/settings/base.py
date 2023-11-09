@@ -28,13 +28,14 @@ DJANGO_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "django.contrib.sites"
+    "django.contrib.sites",
 ]
 
 LOCAL_APPS = [
     "apps.users",
     "apps.common",
     "apps.profiles",
+    "apps.videos",
 ]
 
 THIRD_PARTY_APPS = [
@@ -48,6 +49,7 @@ THIRD_PARTY_APPS = [
     "allauth.socialaccount",
     "dj_rest_auth",
     "dj_rest_auth.registration",
+    "taggit",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS

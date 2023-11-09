@@ -4,6 +4,7 @@ djangorestframework==3.14.0
 django-cors-headers==3.14.0
 django-filter==22.1
 django-autoslug==1.9.8
+django-taggit==3.1.0
 drf-yasg==1.21.5
 Pillow==9.4.0
 argon2-cffi==21.3.0
