@@ -15,6 +15,8 @@ from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response
 from rest_framework import filters, generics, permissions, status
 
+from .emails import send_video_creation_notification
+from apps.profiles.models import Profile
 
 from .exceptions import VideoNotFoundException
 
@@ -45,6 +47,12 @@ class VideoCreateView(generics.CreateAPIView):
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
+
+        video_creator = Profile.objects.get(user=self.request.user)
+        followers = video_creator.followers.all()
+
+        # Notify followers by email
+        send_video_creation_notification(video_creator, followers)
 
 
 class VideoRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
