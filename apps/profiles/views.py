@@ -76,7 +76,7 @@ class YourFollowingListView(APIView):
     def get(self, request, format=None):
         try:
             profile = Profile.objects.get(user__id=request.user.id)
-            following_profiles = profile.followers.all()
+            following_profiles = profile.following.all()                     #1
             serializer = FollowSerializer(following_profiles, many=True)
             formatted_response = {
                 "status_code": status.HTTP_200_OK,
@@ -93,7 +93,7 @@ class YourFollowersListView(APIView):
     def get(self, request, format=None):
         try:
             profile = Profile.objects.get(user__id=request.user.id)
-            followers_profiles = profile.following.all()              # Use the 'following' attribute to get the followers
+            followers_profiles = profile.followers.all()                       #1
             serializer = FollowSerializer(followers_profiles, many=True)
             formatted_response = {
                 "status_code": status.HTTP_200_OK,
@@ -110,7 +110,7 @@ class FollowingListView(APIView):
     def get(self, request, user_id, format=None):
         try:
             profile = Profile.objects.get(user__id=user_id)
-            following_profiles = profile.followers.all()
+            following_profiles = profile.following.all()                    #1
             serializer = FollowSerializer(following_profiles, many=True)
             formatted_response = {
                 "status_code": status.HTTP_200_OK,
@@ -127,7 +127,7 @@ class FollowersListView(APIView):
     def get(self, request, user_id, format=None):
         try:
             profile = Profile.objects.get(user__id=user_id)
-            followers_profiles = profile.following.all()              # Use the 'following' attribute to get the followers
+            followers_profiles = profile.followers.all()                # 1
             serializer = FollowSerializer(followers_profiles, many=True)
             formatted_response = {
                 "status_code": status.HTTP_200_OK,

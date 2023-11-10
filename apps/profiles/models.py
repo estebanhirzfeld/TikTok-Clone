@@ -17,16 +17,16 @@ class Profile(TimeStampedModel):
     about_me = models.CharField(_("about me"), max_length=50)
     profile_photo = models.ImageField(_("profile photo"), default='/profile_placeholder.png')
 
-    followers = models.ManyToManyField("self", verbose_name=_("followers"), blank=True, related_name="following", symmetrical=False)
+    following = models.ManyToManyField("self", verbose_name=_("following"), blank=True, related_name="followers", symmetrical=False)
 
     def __str__(self) -> str:
         return f"{self.user.first_name}'s Profile"
     
     def follow(self, profile):
-        self.followers.add(profile)
+        self.following.add(profile)
 
     def unfollow(self, profile):
-        self.followers.remove(profile)
+        self.following.remove(profile)
 
     def check_following(self, profile):
-        return self.followers.filter(pkid=profile.pkid).exists()
+        return self.following.filter(pkid=profile.pkid).exists()
