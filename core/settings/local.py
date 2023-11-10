@@ -19,5 +19,6 @@ EMAIL_BACKEND = "djcelery_email.backends.CeleryEmailBackend"
 EMAIL_HOST = env("EMAIL_HOST", default="mailhog")
 EMAIL_PORT = env("EMAIL_PORT")
 DEFAULT_FROM_EMAIL = "support@tiktok-clone.site"
+DEFAULT_NO_REPLY_EMAIL = "no-reply@tiktok-clone.site"
 DOMAIN = env("DOMAIN")
 SITE_NAME = "TikTok Clone"

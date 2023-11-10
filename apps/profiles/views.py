@@ -1,14 +1,12 @@
 # TODO: change this in production
 from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
-from django.core.mail import send_mail
 from rest_framework import generics, status
 from rest_framework.exceptions import NotFound
 from rest_framework.parsers import MultiPartParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-
 
 from core.settings.local import DEFAULT_FROM_EMAIL
 
