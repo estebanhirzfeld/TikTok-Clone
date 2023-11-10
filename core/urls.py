@@ -34,13 +34,16 @@ urlpatterns = [
     path("api/v1/auth/registration/", include("dj_rest_auth.registration.urls")),
     path("api/v1/auth/user/", CustomUserDetailsView.as_view(), name="user_details"),
     path("api/v1/auth/", include("dj_rest_auth.urls")),
-    path( "api/v1/auth/password/reset/confirm/<uidb64>/<token>/", PasswordResetConfirmView.as_view(), name="password_reset_confirm"),
+    path("api/v1/auth/password/reset/confirm/<uidb64>/<token>/", PasswordResetConfirmView.as_view(), name="password_reset_confirm"),
 
     # Profile
     path("api/v1/profiles/", include("apps.profiles.urls")),
 
     # Video
     path("api/v1/videos/", include("apps.videos.urls")),
+
+    # Likes
+    path("api/v1/likes/", include("apps.likes.urls")),
 
 ]
 

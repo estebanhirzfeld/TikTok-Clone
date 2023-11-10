@@ -43,6 +43,7 @@ class VideoSerializer(serializers.ModelSerializer):
     views = serializers.SerializerMethodField()
     created_at = serializers.SerializerMethodField()
     updated_at = serializers.SerializerMethodField()
+    likes = serializers.SerializerMethodField()
 
     
     def get_views(self, obj):
@@ -86,6 +87,10 @@ class VideoSerializer(serializers.ModelSerializer):
         instance.save()
         return instance
     
+    def get_likes(self, obj):
+        return obj.videolike_set.count()  # Assuming the reverse relation is named 'videolike_set'
+
+    
     class Meta:
         model = Video
         fields = [
@@ -96,6 +101,7 @@ class VideoSerializer(serializers.ModelSerializer):
             "thumbnail",
             "tags",
             "views",
+            "likes",
             "created_at",
             "updated_at",
         ]
