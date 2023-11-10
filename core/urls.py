@@ -45,6 +45,9 @@ urlpatterns = [
     # Likes
     path("api/v1/likes/", include("apps.likes.urls")),
 
+    # Comments
+    path("api/v1/comments/", include("apps.comments.urls")),
+
 ]
 
 # TODO: Change "Core"

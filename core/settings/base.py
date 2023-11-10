@@ -37,6 +37,7 @@ LOCAL_APPS = [
     "apps.profiles",
     "apps.videos",
     "apps.likes",
+    "apps.comments",
 ]
 
 THIRD_PARTY_APPS = [
