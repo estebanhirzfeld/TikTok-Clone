@@ -93,7 +93,6 @@ class VideoSerializer(serializers.ModelSerializer):
     
     def get_comments(self, obj):
         return obj.comment_set.count()
-
     
     class Meta:
         model = Video

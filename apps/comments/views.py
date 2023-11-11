@@ -12,6 +12,16 @@ from .emails import send_video_comment_notification, send_comment_reply_notifica
 
 
 # Create your views here.
+class MyCommentListView(generics.ListAPIView):
+    queryset = Comment.objects.all()
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = CommentSerializer
+    pagination_class = CommentPagination
+    renderer_classes = [CommentsJSONRenderer]
+
+    def get_queryset(self):
+        return Comment.objects.filter(user = self.request.user)
+
 class CommentListCreateView(generics.ListCreateAPIView):
     queryset = Comment.objects.all()
     permission_classes = [permissions.IsAuthenticated]
