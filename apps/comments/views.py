@@ -62,15 +62,5 @@ class CommentRepliesListCreateView(generics.ListCreateAPIView):
 
 class CommentDestroyView(generics.DestroyAPIView):
     queryset = Comment.objects.all()
-    serializer_class = CommentSerializer
     permission_classes = [permissions.IsAuthenticated, IsOwnerOrReadOnly] 
-    lookup_field = 'comment_id'
-
-    def get_object(self):
-        comment_id = self.kwargs.get(self.lookup_field)
-        return get_object_or_404(Comment, id=comment_id)
-
-    def destroy(self, request, *args, **kwargs):
-        comment = self.get_object()
-        self.perform_destroy(comment)
-        return Response(status=status.HTTP_204_NO_CONTENT)
+    lookup_field = 'id'
