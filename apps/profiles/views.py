@@ -5,6 +5,7 @@ from rest_framework import generics, status
 from rest_framework.exceptions import NotFound
 from rest_framework.parsers import MultiPartParser
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -16,6 +17,9 @@ from .pagination import ProfilePagination
 from .renderers import ProfileJSONRenderer, ProfilesJSONRenderer
 from .serializers import FollowSerializer, ProfileSerializer, UpdateProfileSerializer
 from .emails import send_profile_following_notification
+
+from .permissions import CanAccessPrivateContent
+from django.db.models import Q
 
 User = get_user_model()
 
@@ -59,7 +63,7 @@ class UpdateProfileAPIView(generics.RetrieveAPIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 class ProfileDetailAPIView(generics.RetrieveAPIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, CanAccessPrivateContent]
     serializer_class = ProfileSerializer
     renderer_classes = [ProfileJSONRenderer]
 
@@ -107,34 +111,58 @@ class FollowingListView(APIView):
 
     def get(self, request, user_id, format=None):
         try:
-            profile = Profile.objects.get(user__id=user_id)
-            following_profiles = profile.following.all()                    #1
-            serializer = FollowSerializer(following_profiles, many=True)
-            formatted_response = {
-                "status_code": status.HTTP_200_OK,
-                "following_count": following_profiles.count(),
-                "following": serializer.data,
-            }
-            return Response(formatted_response, status=status.HTTP_200_OK)
+            target_profile = Profile.objects.get(user__id=user_id)
+
+            # Check if the request user is following the target user or if the target user is not private
+            if (
+                request.user.profile.check_following(target_profile) or
+                not target_profile.is_private or
+                request.user.profile == target_profile
+            ):
+                # Show following profiles only if the conditions are met
+                following_profiles = target_profile.following.all()
+                serializer = FollowSerializer(following_profiles, many=True)
+                formatted_response = {
+                    "status_code": status.HTTP_200_OK,
+                    "following_count": following_profiles.count(),
+                    "following": serializer.data,
+                }
+                return Response(formatted_response, status=status.HTTP_200_OK)
+            else:
+                raise PermissionDenied("You are not authorized to view this user's followers.")
         except Profile.DoesNotExist:
-            return Response(status=404)
+            raise PermissionDenied("You are not authorized to view this user's followers.")
+
+        except Profile.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
 
 class FollowersListView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, user_id, format=None):
         try:
-            profile = Profile.objects.get(user__id=user_id)
-            followers_profiles = profile.followers.all()                # 1
-            serializer = FollowSerializer(followers_profiles, many=True)
-            formatted_response = {
-                "status_code": status.HTTP_200_OK,
-                "followers_count": followers_profiles.count(),
-                "followers": serializer.data,
-            }
-            return Response(formatted_response, status=status.HTTP_200_OK)
+            target_profile = Profile.objects.get(user__id=user_id)
+
+            # Check if the request user is following the target user or if the target user is not private
+            if (
+                request.user.profile.check_following(target_profile) or
+                not target_profile.is_private or
+                request.user.profile == target_profile
+            ):
+                # Show follower profiles only if the conditions are met
+                followers_profiles = target_profile.followers.all()
+                serializer = FollowSerializer(followers_profiles, many=True)
+                formatted_response = {
+                    "status_code": status.HTTP_200_OK,
+                    "followers_count": followers_profiles.count(),
+                    "followers": serializer.data,
+                }
+                return Response(formatted_response, status=status.HTTP_200_OK)
+            else:
+                raise PermissionDenied("You are not authorized to view this user's followers.")
         except Profile.DoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
+            raise PermissionDenied("You are not authorized to view this user's followers.")
+        
 
 class FollowAPIView(APIView):
     def post(self, request, user_id, format=None):

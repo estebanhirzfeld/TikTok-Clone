@@ -7,6 +7,9 @@ class ProfileSerializer(serializers.ModelSerializer):
     last_name = serializers.CharField(source="user.last_name")
     email = serializers.EmailField(source="user.email")
     profile_photo = serializers.SerializerMethodField()
+    followers = serializers.SerializerMethodField()
+    following = serializers.SerializerMethodField()
+    is_follower = serializers.SerializerMethodField()
 
     class Meta:
         model = Profile
@@ -17,11 +20,25 @@ class ProfileSerializer(serializers.ModelSerializer):
             'email',
             'gender',
             'about_me',
+            'is_private',
+            'followers',
+            'following',
+            'is_follower',
             'profile_photo',
         ]
 
     def get_profile_photo(self, obj):
         return obj.profile_photo.url
+
+    def get_followers(self, obj):
+        return obj.followers.count()
+    
+    def get_following(self, obj):
+        return obj.following.count()
+    
+    def get_is_follower(self, obj):
+        current_user_profile = self.context['request'].user.profile
+        return obj.check_follower(current_user_profile)
 
 class UpdateProfileSerializer(serializers.ModelSerializer):
 
@@ -31,6 +48,7 @@ class UpdateProfileSerializer(serializers.ModelSerializer):
             'gender',
             'about_me',
             'profile_photo',
+            'is_private',
         ]
 
 class FollowSerializer(serializers.ModelSerializer):
@@ -44,4 +62,5 @@ class FollowSerializer(serializers.ModelSerializer):
             'last_name',
             'about_me',
             'profile_photo',
+            'is_private',
         ]

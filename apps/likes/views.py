@@ -20,6 +20,9 @@ from apps.comments.pagination import CommentPagination
 
 from django.contrib.auth import get_user_model
 
+from apps.profiles.permissions import CanAccessPrivateContent
+from django.db.models import Q
+
 User = get_user_model()
 
 import logging
@@ -37,8 +40,16 @@ class MyLikedVideosListView(generics.ListAPIView):
 
     def get_queryset(self):
         video_likes = VideoLike.objects.filter(user=self.request.user)
-        liked_videos = [like.video for like in video_likes]
-        return liked_videos
+        liked_video_ids = [like.video.id for like in video_likes]
+
+        queryset = Video.objects.filter(
+            Q(user__profile__is_private=False) |                      # Videos where user profile is not private
+            Q(user__profile__followers=self.request.user.profile) |   # Videos where user is followed by request user
+            Q(user=self.request.user),                                # Videos where user is the request user
+            id__in=liked_video_ids                                    # Only include videos that are liked by the specified user
+        )
+
+        return queryset
 
 
 class UserLikedVideosListView(generics.ListAPIView):
@@ -54,10 +65,19 @@ class UserLikedVideosListView(generics.ListAPIView):
     def get_queryset(self):
         user_id = self.kwargs.get("id")
         user = User.objects.get(id=user_id)
-        video_likes = VideoLike.objects.filter(user=user)
-        liked_videos = [like.video for like in video_likes]
-        return liked_videos
 
+        # Get liked videos by the specified user
+        video_likes = VideoLike.objects.filter(user=user)
+        liked_video_ids = [like.video.id for like in video_likes]
+
+        queryset = Video.objects.filter(
+            Q(user__profile__is_private=False) |                      # Videos where user profile is not private
+            Q(user__profile__followers=self.request.user.profile) |   # Videos where user is followed by request user
+            Q(user=self.request.user),                                # Videos where user is the request user
+            id__in=liked_video_ids                                    # Only include videos that are liked by the specified user
+        )
+
+        return queryset
 
 class LikeVideoCreateDestroyAPIView(generics.CreateAPIView, generics.DestroyAPIView):
     serializer_class = VideoLikeSerializer
@@ -67,6 +87,14 @@ class LikeVideoCreateDestroyAPIView(generics.CreateAPIView, generics.DestroyAPIV
         video_id = kwargs.get('video_id')  
         user = self.request.user
         video = get_object_or_404(Video, id=video_id)
+
+        # Check if the video's user is private
+        if video.user.profile.is_private:
+            # Check if the user is not the video owner
+            if user != video.user:
+                # Check if the requesting user is following the video's user
+                if not user.profile.check_following(video.user.profile):
+                    return Response({'detail': 'You cannot like this video because the user is private and you are not following them.'}, status=status.HTTP_403_FORBIDDEN)
 
         # Check if the user already liked the video
         if VideoLike.objects.filter(user=user, video=video).exists():
@@ -91,6 +119,14 @@ class LikeVideoCreateDestroyAPIView(generics.CreateAPIView, generics.DestroyAPIV
         video_id = kwargs.get('video_id')  
         video = get_object_or_404(Video, id=video_id)
 
+        # Check if the video's user is private
+        if video.user.profile.is_private:
+            # Check if the user is not the video owner
+            if request.user != video.user:
+                # Check if the requesting user is following the video's user
+                if not request.user.profile.check_following(video.user.profile):
+                    return Response({'detail': 'You cannot remove the like from this video because the user is private and you are not following them.'}, status=status.HTTP_403_FORBIDDEN)
+
         # Check if the user has liked the video and delete the like
         video_like = VideoLike.objects.filter(user=request.user, video=video).first()
         if video_like:
@@ -99,7 +135,6 @@ class LikeVideoCreateDestroyAPIView(generics.CreateAPIView, generics.DestroyAPIV
 
         # If the user hasn't liked the video, raise a VideoLikeNotFoundException exception
         raise VideoLikeNotFoundException()
-
 
 class MyLikedCommentsListView(generics.ListAPIView):
     serializer_class = CommentSerializer
@@ -113,9 +148,16 @@ class MyLikedCommentsListView(generics.ListAPIView):
 
     def get_queryset(self):
         comment_likes = CommentLike.objects.filter(user=self.request.user)
-        liked_comments = [like.comment for like in comment_likes]
-        return liked_comments
+        liked_comment_ids = [like.comment.id for like in comment_likes]
 
+        queryset = Comment.objects.filter(
+            Q(user__profile__is_private=False) |                     # Comments on posts where the user profile is not private
+            Q(user__profile__followers=self.request.user.profile) |  # Comments on posts where the user is followed by the request user
+            Q(user=self.request.user),                               # Comments on posts where the user is the request user
+            id__in=liked_comment_ids                                 # Only include comments that are liked by the authenticated user
+        )
+
+        return queryset
 
 class LikeCommentCreateDestroyAPIView(generics.CreateAPIView, generics.DestroyAPIView):
     serializer_class = CommentLikeSerializer

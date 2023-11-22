@@ -16,6 +16,7 @@ class Profile(TimeStampedModel):
     gender = models.CharField(verbose_name=_("gender"), max_length=1, choices=Gender.choices, default=Gender.OTHER)
     about_me = models.CharField(_("about me"), max_length=50)
     profile_photo = models.ImageField(_("profile photo"), default='/profile_placeholder.png')
+    is_private = models.BooleanField(_("is profile private"), default=False)
 
     following = models.ManyToManyField("self", verbose_name=_("following"), blank=True, related_name="followers", symmetrical=False)
 
@@ -29,4 +30,7 @@ class Profile(TimeStampedModel):
         self.following.remove(profile)
 
     def check_following(self, profile):
-        return self.following.filter(pkid=profile.pkid).exists()
+        return self.following.filter(pk=profile.pk).exists()
+
+    def check_follower(self, profile):
+        return self.followers.filter(pk=profile.pk).exists()

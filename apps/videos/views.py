@@ -19,8 +19,11 @@ from django.contrib.auth import get_user_model
 
 from .emails import send_video_creation_notification
 from apps.profiles.models import Profile
+from apps.profiles.permissions import CanAccessPrivateContent
 
-from .exceptions import VideoNotFoundException
+from .exceptions import VideoNotFoundException 
+from django.db.models import Q
+
 
 # Create your views here.
 
@@ -42,7 +45,34 @@ class VideoListView(generics.ListAPIView):
     ]
     renderer_classes = [VideosJSONRenderer]
 
+    def get_queryset(self):
+        queryset = Video.objects.filter(
+        Q(user__profile__is_private=False) |                     # Videos where user profile is not private
+        Q(user__profile__followers=self.request.user.profile) |  # Videos where user is followed by request user
+        Q(user=self.request.user)                                # Videos where user is the request user
+        )
+        return queryset
+
+
+class MyVideoListView(generics.ListAPIView):
+    queryset = Video.objects.all()
+    serializer_class = VideoSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    pagination_class = VideoPagination
+    filter_backends = (DjangoFilterBackend, filters.OrderingFilter)
+    filterset_class = VideoFilter
+    ordering_fields = [
+        "created_at",
+        "updated_at",
+    ]
+    renderer_classes = [VideosJSONRenderer]
+
+    def get_queryset(self):
+        return Video.objects.filter(user=self.request.user)
+
+
 class FollowingUserVideoListView(generics.ListAPIView):
+    queryset = Video.objects.all()
     serializer_class = VideoSerializer
     permission_classes = [permissions.IsAuthenticated]
     pagination_class = VideoPagination
@@ -53,19 +83,16 @@ class FollowingUserVideoListView(generics.ListAPIView):
     renderer_classes = [VideosJSONRenderer]
 
     def get_queryset(self):
-        profile = Profile.objects.get(user=self.request.user)
-        following_profiles = profile.following.all()
-        following_users = following_profiles.values('user')
+        queryset = self.queryset
         
-        # Filter videos by users in the following list
-        queryset = Video.objects.filter(user__in=following_users)
-        
+        following_users = self.request.user.profile.following.values('user')
+        queryset = queryset.filter(user__in=following_users)
         return queryset
-    
+
 
 class UserVideosListView(generics.ListAPIView):
     serializer_class = VideoSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated, CanAccessPrivateContent]
     pagination_class = VideoPagination
     ordering_fields = [
         "created_at",
@@ -74,8 +101,7 @@ class UserVideosListView(generics.ListAPIView):
     renderer_classes = [VideosJSONRenderer]
 
     def get_queryset(self):
-        user_id = self.kwargs.get("id")
-        user = User.objects.get(id=user_id)
+        user = User.objects.get(id=self.kwargs.get("id"))
         user_videos = Video.objects.filter(user=user)
         return user_videos
 
@@ -99,7 +125,7 @@ class VideoCreateView(generics.CreateAPIView):
 class VideoRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Video.objects.all()
     serializer_class = VideoSerializer
-    permission_classes = [permissions.IsAuthenticated, IsOwnerOrReadOnly]
+    permission_classes = [permissions.IsAuthenticated, IsOwnerOrReadOnly, CanAccessPrivateContent]
     lookup_field = "id"
     renderer_classes = [VideoJSONRenderer]
     parser_classes = [MultiPartParser, FormParser]
@@ -118,6 +144,7 @@ class VideoRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     def retrieve(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
+
         except Http404:
             raise VideoNotFoundException()
 

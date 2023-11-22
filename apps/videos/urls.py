@@ -2,6 +2,7 @@ from django.urls import path
 
 from .views import (
     VideoListView,
+    MyVideoListView,
     VideoCreateView,
     FollowingUserVideoListView,
     UserVideosListView,
@@ -10,6 +11,7 @@ from .views import (
 
 urlpatterns = [
     path("", VideoListView.as_view(), name="video-list"),
+    path("me/", MyVideoListView.as_view(), name="my-video-list"),
     path("upload/", VideoCreateView.as_view(), name="video-upload"),
     path("following/", FollowingUserVideoListView.as_view(), name="following-user-videos"),
     path("user/<uuid:id>/", UserVideosListView.as_view(), name="user-videos"),
