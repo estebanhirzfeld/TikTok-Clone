@@ -9,17 +9,19 @@ from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from core.settings.local import DEFAULT_FROM_EMAIL
-
 from .exceptions import CantFollowYourself
-from .models import Profile
-from .pagination import ProfilePagination
-from .renderers import ProfileJSONRenderer, ProfilesJSONRenderer
-from .serializers import FollowSerializer, ProfileSerializer, UpdateProfileSerializer
-from .emails import send_profile_following_notification
+from .models import Profile, FollowRequest
+from .pagination import ProfilePagination, FollowRequestsPagination
+from .renderers import ProfileJSONRenderer, ProfilesJSONRenderer, FollowRequestsJSONRenderer
+from .serializers import FollowSerializer, ProfileSerializer, UpdateProfileSerializer, FollowRequestSerializer
+from .emails import send_profile_following_notification, send_profile_follow_request_notification, send_follow_request_accepted_notification
 
 from .permissions import CanAccessPrivateContent
 from django.db.models import Q
+
+from .signals import follow_on_request_accept
+from django.db import transaction
+from rest_framework.decorators import permission_classes
 
 User = get_user_model()
 
@@ -181,6 +183,26 @@ class FollowAPIView(APIView):
                 }
                 return Response(formatted_response, status=status.HTTP_400_BAD_REQUEST)
 
+            # Check if the target profile is private
+            if profile.is_private:
+                follow_request, created = FollowRequest.objects.get_or_create(requester=user_profile, target=profile)
+                
+                if not created:
+                    formatted_response = {
+                        "status_code": status.HTTP_400_BAD_REQUEST,
+                        "message": f"You have already sent a follow request to {profile.user.first_name} {profile.user.last_name}",
+                    }
+                    return Response(formatted_response, status=status.HTTP_400_BAD_REQUEST)
+
+                send_profile_follow_request_notification(user_profile, profile)
+                return Response(
+                    {
+                        "status_code": status.HTTP_200_OK,
+                        "message": f"Follow request sent to {profile.user.first_name} {profile.user.last_name}",
+                    },
+                )
+
+            # If the target profile is not private, directly follow
             user_profile.follow(profile)
             
             # Notify following user by email
@@ -194,7 +216,6 @@ class FollowAPIView(APIView):
             )
         except Profile.DoesNotExist:
             raise NotFound("You can't follow a profile that does not exist.")
-
 
 class UnfollowAPIView(APIView):
     def post(self, request, user_id, *args, **kwargs):
@@ -221,3 +242,58 @@ class UnfollowAPIView(APIView):
         
         except Profile.DoesNotExist:
             raise NotFound("You can't unfollow a profile that does not exist.")
+
+
+class FollowListView(generics.ListAPIView):
+    serializer_class = FollowRequestSerializer
+    permission_classes = [IsAuthenticated]
+    pagination_class = FollowRequestsPagination
+    renderer_classes = [FollowRequestsJSONRenderer]
+
+    def get_queryset(self):
+        return FollowRequest.objects.filter(target=self.request.user.profile, accepted=False)
+
+class AcceptFollowRequestView(generics.UpdateAPIView):
+    serializer_class = FollowRequestSerializer
+    permission_classes = [IsAuthenticated]
+    lookup_field = "id"
+    lookup_url_kwarg = "follow_request_id"
+
+    def get_queryset(self):
+        follow_request_id = self.kwargs['follow_request_id']
+        return FollowRequest.objects.filter(target=self.request.user.profile, accepted=False, id=follow_request_id)
+
+    def perform_update(self, serializer):
+        follow_request = self.get_object()
+        requester_profile = follow_request.requester
+        target_profile = follow_request.target
+
+        if follow_request.target != self.request.user.profile:
+            return PermissionDenied({"detail": "You are not allowed to accept this follow request."})
+
+        with transaction.atomic():
+            serializer.instance.accepted = True
+            serializer.save(partial=True) 
+            serializer.is_valid(raise_exception=True)
+            follow_on_request_accept(sender=FollowRequest, instance=follow_request)
+            send_follow_request_accepted_notification(requester_profile, target_profile)
+
+        return Response({'status': 'success'})
+
+
+class RejectFollowRequestView(generics.DestroyAPIView):
+    serializer_class = FollowRequestSerializer
+    permission_classes = [IsAuthenticated]
+    lookup_field = "id"
+    lookup_url_kwarg = "follow_request_id"
+
+    def get_queryset(self):
+        follow_request_id = self.kwargs['follow_request_id']
+        return FollowRequest.objects.filter(Q(target=self.request.user.profile) | Q(requester=self.request.user.profile), id=follow_request_id)
+
+    def perform_destroy(self, instance):
+        # You can add additional logic here if needed
+        instance.delete()
+
+    def delete(self, request, *args, **kwargs):
+        return self.destroy(request, *args, **kwargs)

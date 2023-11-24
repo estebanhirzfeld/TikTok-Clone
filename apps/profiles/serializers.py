@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Profile
+from .models import Profile, FollowRequest
 
 
 class ProfileSerializer(serializers.ModelSerializer):
@@ -63,4 +63,18 @@ class FollowSerializer(serializers.ModelSerializer):
             'about_me',
             'profile_photo',
             'is_private',
+        ]
+
+class FollowRequestSerializer(serializers.ModelSerializer):
+    requester = ProfileSerializer()
+    
+    class Meta:
+        model = FollowRequest
+        fields = [
+            "id",
+            "updated_at",
+            "created_at",
+            "accepted",
+            "requester",
+            "target"
         ]

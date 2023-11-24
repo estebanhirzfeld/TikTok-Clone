@@ -34,3 +34,15 @@ class Profile(TimeStampedModel):
 
     def check_follower(self, profile):
         return self.followers.filter(pk=profile.pk).exists()
+
+class FollowRequest(TimeStampedModel):
+    requester = models.ForeignKey(Profile, verbose_name=_("requester user"), on_delete=models.CASCADE, related_name='follow_requests_sent')
+    target = models.ForeignKey(Profile, verbose_name=_("target user"), on_delete=models.CASCADE, related_name='follow_requests_received')
+    created_at = models.DateTimeField(auto_now_add=True)
+    accepted = models.BooleanField(default=False)
+
+    class Meta:
+        unique_together = ['requester', 'target']
+
+    def __str__(self):
+        return f'{self.requester.user.first_name} -> {self.target.user.first_name}'
