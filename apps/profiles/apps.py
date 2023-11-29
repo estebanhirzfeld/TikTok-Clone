@@ -9,3 +9,4 @@ class ProfilesConfig(AppConfig):
 
     def ready(self):
         from apps.profiles import signals
+        from apps.search import signals

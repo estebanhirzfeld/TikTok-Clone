@@ -48,6 +48,9 @@ urlpatterns = [
     # Comments
     path("api/v1/comments/", include("apps.comments.urls")),
 
+    # Search
+    path("api/v1/search/", include("apps.search.urls")),
+
 ]
 
 # TODO: Change "Core"

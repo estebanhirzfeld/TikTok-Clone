@@ -38,6 +38,7 @@ LOCAL_APPS = [
     "apps.videos",
     "apps.likes",
     "apps.comments",
+    "apps.search",
 ]
 
 THIRD_PARTY_APPS = [
@@ -52,6 +53,8 @@ THIRD_PARTY_APPS = [
     "dj_rest_auth",
     "dj_rest_auth.registration",
     "taggit",
+    "django_elasticsearch_dsl",
+    "django_elasticsearch_dsl_drf",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -163,6 +166,12 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 CORS_URLS_REGEX = r"^api/.*$"
 
+# ELASTICSEARCH
+ELASTICSEARCH_DSL = {
+    "default": {
+        "hosts": "elastic-search:9200",
+    },
+}
 
 # LOGGING
 LOGGING = {
