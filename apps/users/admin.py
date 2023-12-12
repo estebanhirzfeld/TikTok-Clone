@@ -28,7 +28,15 @@ class UserAdmin(BaseUserAdmin):
 
     fieldsets = (
         (_("Login Credentials"), {"fields": ("email", "password")}),
-        (_("Personal Info"), {"fields": ("first_name", "last_name",)}),
+        (
+            _("Personal Info"),
+            {
+                "fields": (
+                    "first_name",
+                    "last_name",
+                )
+            },
+        ),
         (
             _("Permissions and Groups"),
             {
@@ -44,13 +52,20 @@ class UserAdmin(BaseUserAdmin):
         (_("Important Dates"), {"fields": ("last_login", "date_joined")}),
     )
     add_fieldsets = (
-        ("Add User", {
-            "classes": ("wide",),
-            "fields": ("email", "first_name", "last_name","password1", "password2"),
-        }),
+        (
+            "Add User",
+            {
+                "classes": ("wide",),
+                "fields": (
+                    "email",
+                    "first_name",
+                    "last_name",
+                    "password1",
+                    "password2",
+                ),
+            },
+        ),
     )
-
-
 
     search_fields = ["email", "first_name", "last_name"]
 

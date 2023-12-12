@@ -1,29 +1,25 @@
-from django.core.files.storage import default_storage
-from django.shortcuts import render
-from django.http import Http404
-from django.shortcuts import get_object_or_404
 import logging
-from .models import Video, VideoView
-from .serializers import VideoSerializer
-from .permissions import IsOwnerOrReadOnly
-from .pagination import VideoPagination
-from .filters import VideoFilter
-from .renderers import VideoJSONRenderer, VideosJSONRenderer
-
-from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework.parsers import FormParser, MultiPartParser
-from rest_framework.response import Response
-from rest_framework import filters, generics, permissions, status
 
 from django.contrib.auth import get_user_model
+from django.core.files.storage import default_storage
+from django.db.models import Q
+from django.http import Http404
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import filters, generics, permissions
+from rest_framework.parsers import FormParser, MultiPartParser
+from rest_framework.response import Response
 
-from .emails import send_video_creation_notification
 from apps.profiles.models import Profile
 from apps.profiles.permissions import CanAccessPrivateContent
 
-from .exceptions import VideoNotFoundException 
-from django.db.models import Q
-
+from .emails import send_video_creation_notification
+from .exceptions import VideoNotFoundException
+from .filters import VideoFilter
+from .models import Video, VideoView
+from .pagination import VideoPagination
+from .permissions import IsOwnerOrReadOnly
+from .renderers import VideoJSONRenderer, VideosJSONRenderer
+from .serializers import VideoSerializer
 
 # Create your views here.
 
@@ -47,9 +43,13 @@ class VideoListView(generics.ListAPIView):
 
     def get_queryset(self):
         queryset = Video.objects.filter(
-        Q(user__profile__is_private=False) |                     # Videos where user profile is not private
-        Q(user__profile__followers=self.request.user.profile) |  # Videos where user is followed by request user
-        Q(user=self.request.user)                                # Videos where user is the request user
+            Q(user__profile__is_private=False)
+            | Q(  # Videos where user profile is not private
+                user__profile__followers=self.request.user.profile
+            )
+            | Q(  # Videos where user is followed by request user
+                user=self.request.user
+            )  # Videos where user is the request user
         )
         return queryset
 
@@ -84,8 +84,8 @@ class FollowingUserVideoListView(generics.ListAPIView):
 
     def get_queryset(self):
         queryset = self.queryset
-        
-        following_users = self.request.user.profile.following.values('user')
+
+        following_users = self.request.user.profile.following.values("user")
         queryset = queryset.filter(user__in=following_users)
         return queryset
 
@@ -107,7 +107,7 @@ class UserVideosListView(generics.ListAPIView):
 
 
 class VideoCreateView(generics.CreateAPIView):
-    queryset = Video.objects.all() 
+    queryset = Video.objects.all()
     serializer_class = VideoSerializer
     permission_classes = [permissions.IsAuthenticated]
     renderer_classes = [VideoJSONRenderer]
@@ -125,7 +125,11 @@ class VideoCreateView(generics.CreateAPIView):
 class VideoRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Video.objects.all()
     serializer_class = VideoSerializer
-    permission_classes = [permissions.IsAuthenticated, IsOwnerOrReadOnly, CanAccessPrivateContent]
+    permission_classes = [
+        permissions.IsAuthenticated,
+        IsOwnerOrReadOnly,
+        CanAccessPrivateContent,
+    ]
     lookup_field = "id"
     renderer_classes = [VideoJSONRenderer]
     parser_classes = [MultiPartParser, FormParser]
@@ -151,9 +155,6 @@ class VideoRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
         serializer = self.get_serializer(instance)
 
         viewer_ip = request.META.get("REMOTE_ADDR", None)
-        VideoView.record_view(
-            video=instance, user=request.user, viewer_ip=viewer_ip
-        )
+        VideoView.record_view(video=instance, user=request.user, viewer_ip=viewer_ip)
 
         return Response(serializer.data)
-    

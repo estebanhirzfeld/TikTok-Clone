@@ -1,31 +1,34 @@
+from django.contrib.auth import get_user_model
+from django.db.models import Q
 from django.shortcuts import get_object_or_404
-
-from django.http import Http404
-from rest_framework import generics, permissions, status, serializers
+from rest_framework import generics, permissions, serializers, status
 from rest_framework.response import Response
-from .models import VideoLike, CommentLike
-from .exceptions import VideoLikeException, VideoLikeAlreadyExistsException, VideoLikeNotFoundException, CommentLikeAlreadyExistsException, CommentLikeException, CommentLikeNotFoundException
-from .serializers import VideoLikeSerializer, CommentLikeSerializer
-from .emails import send_video_like_notification, send_comment_like_notification
-
-from apps.videos.models import Video
-from apps.videos.renderers import VideosJSONRenderer
-from apps.videos.serializers import VideoSerializer
-from apps.videos.pagination import VideoPagination
 
 from apps.comments.models import Comment
+from apps.comments.pagination import CommentPagination
 from apps.comments.renderers import CommentsJSONRenderer
 from apps.comments.serializers import CommentSerializer
-from apps.comments.pagination import CommentPagination
+from apps.videos.models import Video
+from apps.videos.pagination import VideoPagination
+from apps.videos.renderers import VideosJSONRenderer
+from apps.videos.serializers import VideoSerializer
 
-from django.contrib.auth import get_user_model
-
-from apps.profiles.permissions import CanAccessPrivateContent
-from django.db.models import Q
+from .emails import (
+    send_comment_like_notification,
+    send_video_like_notification,
+)
+from .exceptions import (
+    CommentLikeAlreadyExistsException,
+    CommentLikeException,
+    CommentLikeNotFoundException,
+    VideoLikeAlreadyExistsException,
+    VideoLikeException,
+    VideoLikeNotFoundException,
+)
+from .models import CommentLike, VideoLike
+from .serializers import CommentLikeSerializer, VideoLikeSerializer
 
 User = get_user_model()
-
-import logging
 
 # Create your views here.
 class MyLikedVideosListView(generics.ListAPIView):
@@ -43,10 +46,14 @@ class MyLikedVideosListView(generics.ListAPIView):
         liked_video_ids = [like.video.id for like in video_likes]
 
         queryset = Video.objects.filter(
-            Q(user__profile__is_private=False) |                      # Videos where user profile is not private
-            Q(user__profile__followers=self.request.user.profile) |   # Videos where user is followed by request user
-            Q(user=self.request.user),                                # Videos where user is the request user
-            id__in=liked_video_ids                                    # Only include videos that are liked by the specified user
+            Q(user__profile__is_private=False)
+            | Q(  # Videos where user profile is not private
+                user__profile__followers=self.request.user.profile
+            )
+            | Q(  # Videos where user is followed by request user
+                user=self.request.user
+            ),  # Videos where user is the request user
+            id__in=liked_video_ids,  # Only include videos that are liked by the specified user
         )
 
         return queryset
@@ -71,20 +78,25 @@ class UserLikedVideosListView(generics.ListAPIView):
         liked_video_ids = [like.video.id for like in video_likes]
 
         queryset = Video.objects.filter(
-            Q(user__profile__is_private=False) |                      # Videos where user profile is not private
-            Q(user__profile__followers=self.request.user.profile) |   # Videos where user is followed by request user
-            Q(user=self.request.user),                                # Videos where user is the request user
-            id__in=liked_video_ids                                    # Only include videos that are liked by the specified user
+            Q(user__profile__is_private=False)
+            | Q(  # Videos where user profile is not private
+                user__profile__followers=self.request.user.profile
+            )
+            | Q(  # Videos where user is followed by request user
+                user=self.request.user
+            ),  # Videos where user is the request user
+            id__in=liked_video_ids,  # Only include videos that are liked by the specified user
         )
 
         return queryset
+
 
 class LikeVideoCreateDestroyAPIView(generics.CreateAPIView, generics.DestroyAPIView):
     serializer_class = VideoLikeSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
-        video_id = kwargs.get('video_id')  
+        video_id = kwargs.get("video_id")
         user = self.request.user
         video = get_object_or_404(Video, id=video_id)
 
@@ -94,7 +106,12 @@ class LikeVideoCreateDestroyAPIView(generics.CreateAPIView, generics.DestroyAPIV
             if user != video.user:
                 # Check if the requesting user is following the video's user
                 if not user.profile.check_following(video.user.profile):
-                    return Response({'detail': 'You cannot like this video because the user is private and you are not following them.'}, status=status.HTTP_403_FORBIDDEN)
+                    return Response(
+                        {
+                            "detail": "You cannot like this video because the user is private and you are not following them."
+                        },
+                        status=status.HTTP_403_FORBIDDEN,
+                    )
 
         # Check if the user already liked the video
         if VideoLike.objects.filter(user=user, video=video).exists():
@@ -102,7 +119,7 @@ class LikeVideoCreateDestroyAPIView(generics.CreateAPIView, generics.DestroyAPIV
 
         # Create the like
         try:
-            serializer = self.get_serializer(data={'user': user.pk, 'video': video.pk})
+            serializer = self.get_serializer(data={"user": user.pk, "video": video.pk})
             serializer.is_valid(raise_exception=True)
             serializer.save(user=user)
 
@@ -110,13 +127,15 @@ class LikeVideoCreateDestroyAPIView(generics.CreateAPIView, generics.DestroyAPIV
             if request.user != video.user:
                 send_video_like_notification(request.user, video.user)
 
-            return Response({'detail': 'Video liked successfully.'}, status=status.HTTP_201_CREATED)
+            return Response(
+                {"detail": "Video liked successfully."}, status=status.HTTP_201_CREATED
+            )
 
         except serializers.ValidationError:
             raise VideoLikeException()
 
     def delete(self, request, *args, **kwargs):
-        video_id = kwargs.get('video_id')  
+        video_id = kwargs.get("video_id")
         video = get_object_or_404(Video, id=video_id)
 
         # Check if the video's user is private
@@ -125,16 +144,25 @@ class LikeVideoCreateDestroyAPIView(generics.CreateAPIView, generics.DestroyAPIV
             if request.user != video.user:
                 # Check if the requesting user is following the video's user
                 if not request.user.profile.check_following(video.user.profile):
-                    return Response({'detail': 'You cannot remove the like from this video because the user is private and you are not following them.'}, status=status.HTTP_403_FORBIDDEN)
+                    return Response(
+                        {
+                            "detail": "You cannot remove the like from this video because the user is private and you are not following them."
+                        },
+                        status=status.HTTP_403_FORBIDDEN,
+                    )
 
         # Check if the user has liked the video and delete the like
         video_like = VideoLike.objects.filter(user=request.user, video=video).first()
         if video_like:
             video_like.delete()
-            return Response({'detail': 'Video like removed successfully.'}, status=status.HTTP_204_NO_CONTENT)
+            return Response(
+                {"detail": "Video like removed successfully."},
+                status=status.HTTP_204_NO_CONTENT,
+            )
 
         # If the user hasn't liked the video, raise a VideoLikeNotFoundException exception
         raise VideoLikeNotFoundException()
+
 
 class MyLikedCommentsListView(generics.ListAPIView):
     serializer_class = CommentSerializer
@@ -151,20 +179,25 @@ class MyLikedCommentsListView(generics.ListAPIView):
         liked_comment_ids = [like.comment.id for like in comment_likes]
 
         queryset = Comment.objects.filter(
-            Q(user__profile__is_private=False) |                     # Comments on posts where the user profile is not private
-            Q(user__profile__followers=self.request.user.profile) |  # Comments on posts where the user is followed by the request user
-            Q(user=self.request.user),                               # Comments on posts where the user is the request user
-            id__in=liked_comment_ids                                 # Only include comments that are liked by the authenticated user
+            Q(user__profile__is_private=False)
+            | Q(  # Comments on posts where the user profile is not private
+                user__profile__followers=self.request.user.profile
+            )
+            | Q(  # Comments on posts where the user is followed by the request user
+                user=self.request.user
+            ),  # Comments on posts where the user is the request user
+            id__in=liked_comment_ids,  # Only include comments that are liked by the authenticated user
         )
 
         return queryset
+
 
 class LikeCommentCreateDestroyAPIView(generics.CreateAPIView, generics.DestroyAPIView):
     serializer_class = CommentLikeSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
-        comment_id = kwargs.get('comment_id')  
+        comment_id = kwargs.get("comment_id")
         user = self.request.user
         comment = get_object_or_404(Comment, id=comment_id)
 
@@ -174,28 +207,40 @@ class LikeCommentCreateDestroyAPIView(generics.CreateAPIView, generics.DestroyAP
 
         # Create the like
         try:
-            serializer = self.get_serializer(data={'user': user.pk, 'comment': comment.pk})
+            serializer = self.get_serializer(
+                data={"user": user.pk, "comment": comment.pk}
+            )
             serializer.is_valid(raise_exception=True)
             serializer.save(user=user)
-            
+
             # Notify Liked video by email
             if request.user != comment.user:
-                send_comment_like_notification(request.user, comment.user, comment.video)
+                send_comment_like_notification(
+                    request.user, comment.user, comment.video
+                )
 
-            return Response({'detail': 'Comment liked successfully.'}, status=status.HTTP_201_CREATED)
+            return Response(
+                {"detail": "Comment liked successfully."},
+                status=status.HTTP_201_CREATED,
+            )
 
         except serializers.ValidationError:
             raise CommentLikeException()
-        
+
     def delete(self, request, *args, **kwargs):
-        comment_id = kwargs.get('comment_id')  
+        comment_id = kwargs.get("comment_id")
         comment = get_object_or_404(Comment, id=comment_id)
 
         # Check if the user has liked the comment and delete the like
-        comment_like = CommentLike.objects.filter(user=request.user, comment=comment).first()
+        comment_like = CommentLike.objects.filter(
+            user=request.user, comment=comment
+        ).first()
         if comment_like:
             comment_like.delete()
-            return Response({'detail': 'Comment like removed successfully.'}, status=status.HTTP_204_NO_CONTENT)
+            return Response(
+                {"detail": "Comment like removed successfully."},
+                status=status.HTTP_204_NO_CONTENT,
+            )
 
         # If the user hasn't liked the comment, raise a CommentLikeNotFoundException exception
         raise CommentLikeNotFoundException()

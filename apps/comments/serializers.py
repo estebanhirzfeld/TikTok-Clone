@@ -1,4 +1,5 @@
 from rest_framework import serializers
+
 from .models import Comment
 
 
@@ -20,7 +21,7 @@ class CommentSerializer(serializers.ModelSerializer):
         ]
 
     def get_replies(self, obj):
-        return obj.reply_count  
-    
+        return obj.reply_count
+
     def get_likes(self, obj):
         return obj.commentlike_set.count()

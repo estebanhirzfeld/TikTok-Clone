@@ -1,9 +1,16 @@
-from rest_framework import serializers
-from .models import Video, VideoView
-from apps.profiles.serializers import ProfileSerializer
-from taggit.models import Tag
 import json
-from .validators import validate_video_format, validate_video_size, validate_thumbnail_image_format
+
+from rest_framework import serializers
+from taggit.models import Tag
+
+from apps.profiles.serializers import ProfileSerializer
+
+from .models import Video, VideoView
+from .validators import (
+    validate_thumbnail_image_format,
+    validate_video_format,
+    validate_video_size,
+)
 
 
 class TagListField(serializers.Field):
@@ -37,8 +44,10 @@ class VideoSerializer(serializers.ModelSerializer):
     user_info = ProfileSerializer(source="user.profile", read_only=True)
     video = serializers.FileField(
         validators=[validate_video_format, validate_video_size]
-        )
-    thumbnail = serializers.ImageField(required=False, validators=[validate_thumbnail_image_format])
+    )
+    thumbnail = serializers.ImageField(
+        required=False, validators=[validate_thumbnail_image_format]
+    )
     tags = TagListField(required=False)
     views = serializers.SerializerMethodField()
     created_at = serializers.SerializerMethodField()
@@ -46,13 +55,12 @@ class VideoSerializer(serializers.ModelSerializer):
     likes = serializers.SerializerMethodField()
     comments = serializers.SerializerMethodField()
 
-    
     def get_views(self, obj):
         return VideoView.objects.filter(video=obj).count()
 
     def get_thumbnail(self, obj):
         return obj.thumbnail.url
-    
+
     def get_video(self, obj):
         return obj.video.url
 
@@ -67,7 +75,7 @@ class VideoSerializer(serializers.ModelSerializer):
         return formatted_date
 
     def create(self, validated_data):
-        tags = validated_data.pop("tags", [])  
+        tags = validated_data.pop("tags", [])
         video = Video.objects.create(**validated_data)
 
         # Convert the tags to Tag objects
@@ -77,9 +85,7 @@ class VideoSerializer(serializers.ModelSerializer):
         return video
 
     def update(self, instance, validated_data):
-        instance.thumbnail = validated_data.get(
-            "thumbnail", instance.thumbnail
-        )
+        instance.thumbnail = validated_data.get("thumbnail", instance.thumbnail)
         instance.updated_at = validated_data.get("updated_at", instance.updated_at)
 
         if "tags" in validated_data:
@@ -87,13 +93,13 @@ class VideoSerializer(serializers.ModelSerializer):
 
         instance.save()
         return instance
-    
+
     def get_likes(self, obj):
         return obj.videolike_set.count()
-    
+
     def get_comments(self, obj):
         return obj.comment_set.count()
-    
+
     class Meta:
         model = Video
         fields = [

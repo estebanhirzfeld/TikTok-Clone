@@ -23,7 +23,7 @@ class VideoDocument(Document):
 
     def prepare_video_id(self, instance):
         return str(instance.id)
-    
+
     def prepare_user_first_name(self, instance):
         return instance.user.first_name
 

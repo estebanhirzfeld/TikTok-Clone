@@ -1,4 +1,5 @@
 from django.contrib import admin
+
 from . import models
 
 
@@ -11,10 +12,10 @@ class VideoAdmin(admin.ModelAdmin):
     ordering = ["-created_at"]
 
     def get_queryset(self, request):
-        return super().get_queryset(request).prefetch_related('tags')
+        return super().get_queryset(request).prefetch_related("tags")
 
     def tag_list(self, obj):
-        return u", ".join(o.name for o in obj.tags.all())
+        return ", ".join(o.name for o in obj.tags.all())
 
 
 class VideoViewAdmin(admin.ModelAdmin):
@@ -26,5 +27,3 @@ class VideoViewAdmin(admin.ModelAdmin):
 
 admin.site.register(models.Video, VideoAdmin)
 admin.site.register(models.VideoView, VideoViewAdmin)
-
-

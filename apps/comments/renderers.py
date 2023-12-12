@@ -1,4 +1,5 @@
 import json
+
 from rest_framework.renderers import JSONRenderer
 
 
@@ -14,6 +15,7 @@ class CommentsJSONRenderer(JSONRenderer):
             return super(CommentsJSONRenderer, self).render(data)
 
         return json.dumps({"status_code": status_code, "comments": data})
+
 
 class CommentRepliesJSONRenderer(JSONRenderer):
     charset = "utf-8"

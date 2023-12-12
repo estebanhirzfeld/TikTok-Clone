@@ -1,8 +1,9 @@
 from rest_framework import permissions
 
+
 class CanAccessPrivateContent(permissions.BasePermission):
     def has_permission(self, request, view):
-        if hasattr(view, 'retrieve'):
+        if hasattr(view, "retrieve"):
             obj = view.get_object()
         # elif hasattr(view, 'list'):
         #     obj = view.get_queryset().first()

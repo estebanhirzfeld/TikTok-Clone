@@ -1,7 +1,7 @@
 from datetime import timedelta
 from pathlib import Path
-import environ
 
+import environ
 
 # ENV
 env = environ.Env()
@@ -157,7 +157,7 @@ STATIC_URL = "/staticfiles/"
 STATIC_ROOT = str(ROOT_DIR / "staticfiles")
 
 MEDIA_URL = "/mediafiles/"
-MEDIA_ROOT =  str(ROOT_DIR / "mediafiles")
+MEDIA_ROOT = str(ROOT_DIR / "mediafiles")
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
@@ -206,7 +206,6 @@ if USE_TZ:
     CELERY_TIMEZONE = TIME_ZONE
 
 
-
 # REST_FRAMEWORK
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
@@ -222,7 +221,7 @@ REST_FRAMEWORK = {
 
 # SIMPLE_JWT
 SIMPLE_JWT = {
-    "AUTH_HEADER_TYPES":("Bearer",),
+    "AUTH_HEADER_TYPES": ("Bearer",),
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
     "ROTATE_REFRESH_TOKENS": True,
@@ -234,9 +233,9 @@ SIMPLE_JWT = {
 # REST_AUTH
 REST_AUTH = {
     "USE_JWT": True,
-    #TODO: Change "Core"    
+    # TODO: Change "Core"
     "JWT_AUTH_COOKIE": "tiktok-clone-access-token",
-    "JWT_AUTH_REFRESH_COOKIE": "tiktok-clone-refresh-token", 
+    "JWT_AUTH_REFRESH_COOKIE": "tiktok-clone-refresh-token",
     "REGISTER_SERIALIZER": "apps.users.serializers.CustomRegisterSerializer",
 }
 
@@ -251,6 +250,6 @@ ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_EMAIL_VERIFICATION = "mandatory"
 ACCOUNT_CONFIRM_EMAIL_ON_GET = True
 ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS = 1
-ACCOUNT_USER_MODEL_USERNAME_FIELD = None 
+ACCOUNT_USER_MODEL_USERNAME_FIELD = None
 ACCOUNT_USERNAME_REQUIRED = False
 # TODO: Change these if username is it added later ⬆

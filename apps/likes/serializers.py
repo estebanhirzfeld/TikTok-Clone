@@ -1,13 +1,15 @@
 from rest_framework import serializers
-from .models import VideoLike, CommentLike
+
+from .models import CommentLike, VideoLike
 
 
 class VideoLikeSerializer(serializers.ModelSerializer):
     class Meta:
         model = VideoLike
-        fields = ['user', 'video']
+        fields = ["user", "video"]
+
 
 class CommentLikeSerializer(serializers.ModelSerializer):
     class Meta:
         model = CommentLike
-        fields = ['user', 'comment']
+        fields = ["user", "comment"]

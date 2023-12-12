@@ -1,36 +1,55 @@
-from django.utils.translation import gettext_lazy as _
+from django.contrib.auth import get_user_model
 from django.core.validators import FileExtensionValidator
 from django.db import models
-from apps.common.models import TimeStampedModel
-from django.contrib.auth import get_user_model
+from django.utils.translation import gettext_lazy as _
 from taggit.managers import TaggableManager
+
+from apps.common.models import TimeStampedModel
 
 User = get_user_model()
 
 
 class Video(TimeStampedModel):
-    user = models.ForeignKey(User, verbose_name=_("user"), on_delete=models.CASCADE, related_name="videos")
-    thumbnail = models.ImageField(verbose_name=_("video thumbnail"), default='/video_thumbnail_placeholder.png')
+    user = models.ForeignKey(
+        User, verbose_name=_("user"), on_delete=models.CASCADE, related_name="videos"
+    )
+    thumbnail = models.ImageField(
+        verbose_name=_("video thumbnail"), default="/video_thumbnail_placeholder.png"
+    )
     video = models.FileField(
         verbose_name=_("video"),
         null=True,
         blank=True,
-        default='/video_file_placeholder.png',
-        validators=[FileExtensionValidator(allowed_extensions=['mp4','avi','mkv','MOV'])]
+        default="/video_file_placeholder.png",
+        validators=[
+            FileExtensionValidator(allowed_extensions=["mp4", "avi", "mkv", "MOV"])
+        ],
     )
-    description = models.CharField(verbose_name=_("description"), max_length=255,null=True, blank=True,)
+    description = models.CharField(
+        verbose_name=_("description"),
+        max_length=255,
+        null=True,
+        blank=True,
+    )
     tags = TaggableManager()
 
     def __str__(self):
         return f"{self.user.first_name}'s video"
-    
+
     def view_count(self):
         return self.video_views.count()
 
+
 class VideoView(TimeStampedModel):
-    video = models.ForeignKey(Video, on_delete=models.CASCADE, related_name="video_views")
-    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name="user_views")
-    viewer_ip = models.GenericIPAddressField(verbose_name=_("viewer IP"), null=True, blank=True)
+    video = models.ForeignKey(
+        Video, on_delete=models.CASCADE, related_name="video_views"
+    )
+    user = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, related_name="user_views"
+    )
+    viewer_ip = models.GenericIPAddressField(
+        verbose_name=_("viewer IP"), null=True, blank=True
+    )
 
     class Meta:
         verbose_name = _("Video View")

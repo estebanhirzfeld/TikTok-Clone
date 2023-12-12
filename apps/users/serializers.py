@@ -8,7 +8,6 @@ User = get_user_model()
 
 
 class UserSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = User
         fields = [
@@ -23,9 +22,9 @@ class UserSerializer(serializers.ModelSerializer):
         if instance.is_superuser:
             representation["admin"] = True
         return representation
-    
+
     def get_age(self, obj):
-        return obj.calculate_age  
+        return obj.calculate_age
 
 
 class CustomRegisterSerializer(RegisterSerializer):

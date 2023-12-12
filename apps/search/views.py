@@ -6,12 +6,11 @@ from django_elasticsearch_dsl_drf.filter_backends import (
     SearchFilterBackend,
 )
 from django_elasticsearch_dsl_drf.viewsets import DocumentViewSet
+from elasticsearch_dsl import Q
 from rest_framework import permissions
 
 from .documents import VideoDocument
 from .serializers import VideoElasticSearchSerializer
-from elasticsearch_dsl import Q
-
 
 
 class VideoElasticSearchView(DocumentViewSet):
@@ -37,7 +36,7 @@ class VideoElasticSearchView(DocumentViewSet):
 
     ordering_fields = {"created_at": "created_at"}
     ordering = ("-created_at",)
-    
+
     def get_queryset(self):
         queryset = super().get_queryset()
 
