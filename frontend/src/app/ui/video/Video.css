@@ -1,0 +1,41 @@
+.video-container {
+    position: relative;
+    width: 100%;
+    max-width: 600px; /* Adjust as needed */
+    margin: 0 auto;
+  }
+  
+  .video {
+    width: 100%;
+    height: auto;
+    cursor: pointer;
+  }
+  
+  .video-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.3);
+  }
+  
+  .play-button {
+    font-size: 2rem;
+    color: #fff;
+    cursor: pointer;
+  }
+  
+  .video-info {
+    padding: 10px;
+    background: rgba(0, 0, 0, 0.7);
+    color: #fff;
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  

@@ -1,3 +1,6 @@
+build-min:
+	docker-compose -f local.yml up --build -d django nginx nextjs postgres --remove-orphans
+
 build:
 	docker compose -f local.yml up --build -d --remove-orphans
 
